@@ -1,89 +1,118 @@
-const apiKey = "1a6cda69c04f6851e30de8f581258d5b"; // ใส่ API Key ของคุณ
-const form = document.getElementById("search-form");
-const cityInput = document.getElementById("city-input");
-const weatherInfoContainer = document.getElementById("weather-info-container");
+const apiKey = 'YOUR_API_KEY_HERE';
 
-// ฟังก์ชันดึงข้อมูลอากาศปัจจุบัน
-async function getWeather(city) {
-    try {
-        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=th`;
-        const response = await fetch(url);
+// 1. เลือก DOM Elements
+const searchForm = document.querySelector('#search-form');
+const cityInput = document.querySelector('#city-input');
+const favoritesContainer = document.querySelector('#favorites-container');
+const refreshBtn = document.querySelector('#refresh-btn');
 
-        if (!response.ok) throw new Error("ไม่พบข้อมูลเมืองที่ค้นหา");
+// --- EVENT LISTENERS ---
+// โหลดเมืองโปรดเมื่อเปิดหน้าเว็บ
+document.addEventListener('DOMContentLoaded', loadFavoriteCities);
 
-        const data = await response.json();
-        displayWeather(data);
-
-        // ดึงข้อมูลพยากรณ์ 5 วันต่อ
-        getForecast(city);
-
-    } catch (error) {
-        weatherInfoContainer.innerHTML = `<p class="error">${error.message}</p>`;
-    }
-}
-// ฟังก์ชันแสดงข้อมูลอากาศปัจจุบัน
-function displayWeather(data) {
-    const { name, main, weather, wind } = data;
-
-    weatherInfoContainer.innerHTML = `
-        <h2>🌆 ${name}</h2>
-        <p>🌡️ อุณหภูมิ: ${main.temp}°C</p>
-        <p>💧 ความชื้น: ${main.humidity}%</p>
-        <p>💨 ลม: ${wind.speed} m/s</p>
-        <p>☁️ สภาพอากาศ: ${weather[0].description}</p>
-        <img src="https://openweathermap.org/img/wn/${weather[0].icon}@2x.png" alt="weather icon">
-        <h3>📅 พยากรณ์อากาศ 5 วัน</h3>
-        <div id="forecast-container" class="forecast"></div>
-    `;
-}
-
-// ฟังก์ชันดึงข้อมูลพยากรณ์อากาศ 5 วัน
-async function getForecast(city) {
-    try {
-        const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric&lang=th`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("ไม่สามารถโหลดพยากรณ์อากาศได้");
-
-        const data = await response.json();
-        displayForecast(data);
-
-    } catch (error) {
-        document.getElementById("forecast-container").innerHTML = `<p class="error">${error.message}</p>`;
-    }
-}
-
-// ฟังก์ชันแสดงผลพยากรณ์อากาศ
-function displayForecast(data) {
-    const forecastContainer = document.getElementById("forecast-container");
-    forecastContainer.innerHTML = "";
-
-    // ดึงข้อมูลวันละ 1 เวลา (เลือก 12:00 ของแต่ละวัน)
-    const dailyData = data.list.filter(item => item.dt_txt.includes("12:00:00"));
-
-    dailyData.forEach(day => {
-        const date = new Date(day.dt_txt).toLocaleDateString("th-TH", {
-            weekday: "long",
-            day: "numeric",
-            month: "long"
-        });
-
-        forecastContainer.innerHTML += `
-            <div class="forecast-item">
-                <h4>${date}</h4>
-                <p>🌡️ ${day.main.temp}°C</p>
-                <p>☁️ ${day.weather[0].description}</p>
-                <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png" alt="icon">
-            </div>
-        `;
-    });
-}
-
-// Event เมื่อกดค้นหา
-form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const city = cityInput.value.trim();
-    if (city) {
-        getWeather(city);
-        cityInput.value = "";
+// จัดการการเพิ่มเมืองใหม่
+searchForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const cityName = cityInput.value.trim();
+    if (cityName) {
+        addCityToFavorites(cityName);
+        cityInput.value = '';
     }
 });
+
+// จัดการการลบเมือง
+favoritesContainer.addEventListener('click', event => {
+    // TODO: ภารกิจที่ 4 - เขียน Logic การลบเมือง (ใช้ Event Delegation)
+    // 1. เช็คว่า element ที่ถูกคลิกมี class 'remove-btn' หรือไม่
+    // 2. ถ้าใช่ ให้หาชื่อเมืองจาก parent element ที่ใกล้ที่สุด (.weather-card)
+    //    คำใบ้: event.target.closest('.weather-card').dataset.city
+    // 3. ถ้าได้ชื่อเมืองมาแล้ว ให้เรียกใช้ฟังก์ชัน removeCityFromFavorites(cityName)
+});
+
+// จัดการการ Refresh
+refreshBtn.addEventListener('click', loadFavoriteCities);
+
+
+// --- FUNCTIONS ---
+
+function getFavoriteCities() {
+    // TODO: ภารกิจที่ 1.1 - เขียนฟังก์ชันเพื่อดึงรายชื่อเมืองจาก localStorage
+    // คำใบ้: ใช้ localStorage.getItem('favoriteCities') และ JSON.parse()
+    // ถ้าไม่มีข้อมูล ให้ return array ว่าง []
+    const citiesJSON = localStorage.getItem('favoriteCities');
+    return citiesJSON ? JSON.parse(citiesJSON) : [];
+}
+
+function saveFavoriteCities(cities) {
+    // TODO: ภารกิจที่ 1.2 - เขียนฟังก์ชันเพื่อบันทึกรายชื่อเมืองลง localStorage
+    // คำใบ้: ใช้ localStorage.setItem('favoriteCities', ...) และ JSON.stringify()
+    localStorage.setItem('favoriteCities', JSON.stringify(cities));
+}
+
+function loadFavoriteCities() {
+    favoritesContainer.innerHTML = ''; // เคลียร์ของเก่าก่อน
+    const cities = getFavoriteCities();
+    // TODO: ภารกิจที่ 2 - วนลูปรายชื่อเมือง (cities) แล้วเรียกใช้ฟังก์ชัน fetchAndDisplayWeather() สำหรับแต่ละเมือง
+    // คำใบ้: cities.forEach(city => fetchAndDisplayWeather(city));
+}
+
+async function addCityToFavorites(cityName) {
+    // TODO: ภารกิจที่ 3 - เขียนฟังก์ชันสำหรับเพิ่มเมืองใหม่
+    // 1. ดึงรายชื่อเมืองปัจจุบันมา
+    // 2. ตรวจสอบว่าเมืองนี้ถูกเพิ่มไปแล้วหรือยัง (เพื่อป้องกันการซ้ำ)
+    // 3. ถ้ายังไม่มี ให้เพิ่มเมืองใหม่เข้าไปใน array
+    // 4. บันทึก array ใหม่ลง localStorage
+    // 5. เรียกใช้ loadFavoriteCities() เพื่อแสดงผลใหม่ทั้งหมด
+    let cities = getFavoriteCities();
+    if (!cities.includes(cityName)) {
+        cities.push(cityName);
+        saveFavoriteCities(cities);
+        loadFavoriteCities();
+    } else {
+        alert(`${cityName} อยู่ในรายการโปรดแล้ว`);
+    }
+}
+
+function removeCityFromFavorites(cityName) {
+    // TODO: ภารกิจที่ 4.1 - เขียน Logic ส่วนนี้
+    // 1. ดึงรายชื่อเมืองปัจจุบันมา
+    // 2. ใช้ .filter() เพื่อสร้าง array ใหม่ที่ไม่มีเมืองที่ต้องการลบ
+    // 3. บันทึก array ใหม่ลง localStorage
+    // 4. เรียกใช้ loadFavoriteCities() เพื่อแสดงผลใหม่ทั้งหมด
+}
+
+async function fetchAndDisplayWeather(city) {
+    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=th`;
+    
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`ไม่พบข้อมูลของ ${city}`);
+        
+        const data = await response.json();
+        
+        const { name, main, weather } = data;
+        const card = document.createElement('div');
+        card.className = 'weather-card';
+        card.setAttribute('data-city', name); 
+        
+        card.innerHTML = `
+            <div>
+                <h3>${name}</h3>
+                <p>${weather[0].description}</p>
+            </div>
+            <div class="text-right">
+                <p class="temp">${main.temp.toFixed(1)}°C</p>
+            </div>
+            <button class="remove-btn">X</button>
+        `;
+        
+        favoritesContainer.appendChild(card);
+
+    } catch (error) {
+        console.error(error);
+        const card = document.createElement('div');
+        card.className = 'weather-card';
+        card.innerHTML = `<h3>${city}</h3><p class="error">${error.message}</p>`;
+        favoritesContainer.appendChild(card);
+    }
+}
