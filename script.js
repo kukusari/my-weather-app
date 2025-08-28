@@ -1,4 +1,4 @@
-const apiKey = 'YOUR_API_KEY_HERE';
+const apiKey = '1a6cda69c04f6851e30de8f581258d5b';
 
 // 1. เลือก DOM Elements
 const searchForm = document.querySelector('#search-form');
@@ -72,6 +72,7 @@ async function addCityToFavorites(cityName) {
         alert(`${cityName} อยู่ในรายการโปรดแล้ว`);
     }
 }
+
 
 function removeCityFromFavorites(cityName) {
     // TODO: ภารกิจที่ 4.1 - เขียน Logic ส่วนนี้
